@@ -1,0 +1,296 @@
+Program.Sub.ScreenSU.Start
+gui.SS_Form1..create
+gui.SS_Form1..caption("Budget Balance Report")
+gui.SS_Form1..size(2665,2280)
+gui.SS_Form1..position(0,0)
+gui.SS_Form1..event(unload,unload)
+gui.SS_Form1..alwaysontop(False)
+gui.SS_Form1..fontname("Arial")
+gui.SS_Form1..fontsize(8)
+gui.SS_Form1..forecolor(0)
+gui.SS_Form1..fontstyle(,,,,)
+gui.SS_Form1..BackColor(-2147483633)
+gui.SS_Form1..controlbox(True)
+gui.SS_Form1..maxbutton(False)
+gui.SS_Form1..minbutton(False)
+gui.SS_Form1..mousepointer(0)
+gui.SS_Form1..moveable(True)
+gui.SS_Form1..sizeable(False)
+gui.SS_Form1..ShowInTaskBar(True)
+gui.SS_Form1..titlebar(True)
+gui.SS_Form1.lbl_txtDept.create(label,"Department",True,1800,200,1,100,135,True,0,Arial,8,-2147483633,0)
+gui.SS_Form1.lbl_txtDept.defaultvalue("")
+gui.SS_Form1.lbl_txtDept.controlgroup(0)
+gui.SS_Form1.txtDept.create(textbox,"",True,1800,330,1,100,335,True,0,Arial,8,16777215,1)
+gui.SS_Form1.txtDept.defaultvalue("")
+gui.SS_Form1.txtDept.controlgroup(0)
+gui.SS_Form1.cmd_txtDept.create(button)
+gui.SS_Form1.cmd_txtDept.caption("^")
+gui.SS_Form1.cmd_txtDept.visible(True)
+gui.SS_Form1.cmd_txtDept.size(330,330)
+gui.SS_Form1.cmd_txtDept.zorder(0)
+gui.SS_Form1.cmd_txtDept.position(1985,335)
+gui.SS_Form1.cmd_txtDept.enabled(True)
+gui.SS_Form1.cmd_txtDept.fontname("Arial")
+gui.SS_Form1.cmd_txtDept.fontsize(8)
+gui.SS_Form1.cmd_txtDept.event(click,cmd_txtdept_click)
+gui.SS_Form1.cmd_txtDept.defaultvalue("")
+gui.SS_Form1.cmd_txtDept.controlgroup(0)
+gui.SS_Form1.chkALL.create(checkbox)
+gui.SS_Form1.chkALL.caption("All")
+gui.SS_Form1.chkALL.visible(True)
+gui.SS_Form1.chkALL.size(1800,300)
+gui.SS_Form1.chkALL.zorder(0)
+gui.SS_Form1.chkALL.position(100,835)
+gui.SS_Form1.chkALL.enabled(True)
+gui.SS_Form1.chkALL.alignment(0)
+gui.SS_Form1.chkALL.fontname("Arial")
+gui.SS_Form1.chkALL.fontsize(8)
+gui.SS_Form1.chkALL.defaultvalue("")
+gui.SS_Form1.chkALL.controlgroup(0)
+gui.SS_Form1.cmdOk.create(button)
+gui.SS_Form1.cmdOk.caption("OK")
+gui.SS_Form1.cmdOk.visible(True)
+gui.SS_Form1.cmdOk.size(1000,360)
+gui.SS_Form1.cmdOk.zorder(0)
+gui.SS_Form1.cmdOk.position(100,1305)
+gui.SS_Form1.cmdOk.enabled(True)
+gui.SS_Form1.cmdOk.fontname("Arial")
+gui.SS_Form1.cmdOk.fontsize(8)
+gui.SS_Form1.cmdOk.event(click,cmdok_click)
+gui.SS_Form1.cmdOk.defaultvalue("")
+gui.SS_Form1.cmdOk.controlgroup(0)
+gui.SS_Form1.txtDept.tabstop(true)
+gui.SS_Form1.txtDept.tabindex(1)
+gui.SS_Form1.cmd_txtDept.tabstop(true)
+gui.SS_Form1.cmd_txtDept.tabindex(2)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.UDT.Balance.Define("GL_Account",String,GL_Account)
+Variable.UDT.Balance.Define("Amount",Float,Amount)
+Variable.uGlobal.uBalance.Declare("Balance")
+Variable.UDT.BiParam.Define("Option_Name",String,Option_Name)
+Variable.UDT.BiParam.Define("Option_Value",String,Option_Value)
+Variable.uGlobal.uBiParam.Declare("BiParam")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+
+F.ODBC.Connection!Con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+
+
+
+F.Intrinsic.Control.If(V.Caller.Hook,=,16090)
+
+	' if it printing the override report
+	F.Intrinsic.Control.If(V.Passed.009001,=,"000809")
+	F.Intrinsic.Control.AndIf(V.Passed.009002,=,"Y")
+
+		' set override to prevent standard report from printing
+		V.Passed.CANCEL.Set(1)
+
+		Gui.SS_Form1..Show
+	F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.CallSub(Unload)
+
+F.Intrinsic.Control.EndIf
+
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+
+F.ODBC.Connection!Con.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+Program.Sub.Print_Report.Start
+
+V.Local.sGroup.Declare(String)
+V.Local.sParams.Declare(String)
+V.Local.sValues.Declare(String)
+V.Local.iRptid.Declare(Long)
+V.Local.sReportPath.Declare(String)
+V.Local.sSel.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sPrgm.Declare(String)
+V.Local.sAll.Declare(String)
+V.Local.sFisYr.Declare(String)
+V.Local.sThirteen.Declare(String)
+V.Local.bInstr.Declare(Boolean)
+
+
+' set user group
+F.Intrinsic.Control.If(V.Screen.SS_Form1!chkALL.Value,=,1)
+	V.Local.sGroup.Set("ALL")
+F.Intrinsic.Control.Else
+	V.Local.sGroup.Set(V.Screen.SS_Form1!txtDept.Text)
+F.Intrinsic.Control.EndIf
+
+
+' as of 2013.1, BI_Param not available
+' get print paramters
+'V.uGlobal.uBiParam.Redim(-1,-1)
+'F.Intrinsic.String.Concat("select Option_Name, Option_Value from BI_Param where Call_Key = '",V.Passed.009000,"' and Seq >'00' order by Seq",V.Local.sSel)
+'F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSel)
+'	F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+'		F.Intrinsic.Variable.LoadUDTFromRecordset("Con","rstSel","v.uGlobal.uBiParam",False,1)
+'	F.Intrinsic.Control.EndIf
+'F.ODBC.Con!rstSel.Close
+
+
+
+' as of 07/22/2013 not all passed variables are always available
+' possible passed variables:
+' 009000*!*009001*!*009002*!*BIP_Terminal*!*BIP_Rptid*!*BIP_Program*!*BIP_BEGACCT*!*BIP_ENDACCT*!*BIP_ALLACCTS*!*BIP_FISYEAR*!*BIP_THIRTEEN*!*BIP_EXCLZERO*!*CANCEL*!*CALLBK*!*GLOBAL
+' get list of those actuall passed
+F.Intrinsic.Variable.ListCallerVars(V.Local.sRet)
+
+
+' some are needed for the report, but might not be passed.  Find the value if it is not passed
+' all accts
+F.Intrinsic.String.IsInString(V.Local.sRet,"BIP_ALLACCTS",True,V.Local.bInStr)
+F.Intrinsic.Control.If(V.Local.bInstr,=,True)
+	V.Local.sAll.Set("Y")
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.If(V.Passed.BIP_BEGACCT,=,"")
+		V.Local.sAll.Set("Y")
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+' A = include 13
+' B = Exclude 13
+' C = only 13
+F.Intrinsic.String.IsInString(V.Local.sRet,"BIP_THIRTEEN",True,V.Local.bInstr)
+F.Intrinsic.Control.If(V.Local.bInstr,=,False)
+	V.Local.sThirteen.Set("A")
+F.Intrinsic.Control.EndIf
+
+' fiscal year
+F.Intrinsic.String.IsInString(V.Local.sRet,"BIP_FISYEAR",True,V.Local.bInstr)
+F.Intrinsic.Control.If(V.Local.bInstr,=,True)
+	V.Local.sFisYr.Set(V.Passed.BIP_FISYEAR)
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Concat("select Beg_Per_1 from BI_Budg_Bal where Trmnl ='",V.Caller.Terminal,"' ",V.Local.sSel)
+	f.ODBC.Connection!Con.ExecuteAndReturn(v.Local.sSel,v.Local.sRet)
+	F.Intrinsic.String.Split(V.Local.sRet,"#$#",V.Local.sRet)
+	F.Intrinsic.String.Split(V.Local.sRet(0),"*!*",V.Local.sRet)
+
+	F.Intrinsic.String.Concat("select Start_Year from GL_Calendar where Period ='01' and Beg_Date ='",V.Local.sRet(0),"' ",V.Local.sSel)
+	f.ODBC.Connection!Con.ExecuteAndReturn(v.Local.sSel,v.Local.sRet)
+	F.Intrinsic.String.Split(V.Local.sRet,"#$#",V.Local.sRet)
+	F.Intrinsic.String.Split(V.Local.sRet(0),"*!*",V.Local.sRet)
+	V.Local.sFisYr.Set(V.Local.sRet(0))
+F.Intrinsic.Control.EndIf
+
+
+' call sub to get true balance for the period
+F.Intrinsic.Control.CallSub(Balance,"FISYEAR",V.Local.sFisYr)
+
+' set report path
+F.Intrinsic.String.Concat(V.Caller.BusintDir,"\Custom\GCG_GL_BUDGET_BAL.RPT",V.Local.sReportPath)
+
+' initialize report to get id
+F.Global.BI.InitializeReport("GCG_GL_BUDGET_BAL.RPT",V.Local.sReportPath,V.Local.iRptid)
+
+' split the parameters
+F.Intrinsic.String.Split("Terminal*!*Rptid*!*Program*!*BEGACCT*!*ENDACCT*!*ALLACCTS*!*FISYEAR*!*THIRTEEN*!*EXCLZERO*!*Group","*!*",V.Local.sParams)
+'Function.Intrinsic.Variable.UDTToString(V.uGlobal.uBiParam,"Option_Name","*!*",V.Ambient.NewLine,V.Local.sParams)
+'F.Intrinsic.String.Concat(V.Local.sParams.Trim,"*!*Group",V.Local.sParams)
+'F.Intrinsic.String.Split(V.Local.sParams,"*!*",V.Local.sParams)
+
+F.Intrinsic.String.Split(V.Passed.BIP_Program,"-",V.Local.sPrgm)
+
+'Function.Intrinsic.Variable.UDTToString(V.uGlobal.uBiParam,"Option_Value","*!*",V.Ambient.NewLine,V.Local.sValues)
+F.Intrinsic.String.Concat(V.Caller.Terminal,"*!*",V.Passed.009001,"*!*",V.Local.sPrgm(0),"*!*",V.Passed.BIP_BEGACCT,"*!*",V.Passed.BIP_ENDACCT,"*!*",V.Local.sAll,"*!*",V.Local.sFisYr,"*!*",V.Local.sThirteen,"*!*",V.Local.sValues)
+
+F.Intrinsic.String.Concat(V.Local.sValues,"*!*",V.Local.sGroup.UCase,V.Local.sValues)
+F.Intrinsic.String.Split(V.Local.sValues,"*!*",V.Local.sValues)
+
+' print the report
+F.Global.BI.PrintReport(V.Local.iRptid,0,V.Local.sParams,V.Local.sValues,"",False)
+
+
+Program.Sub.Print_Report.End
+
+Program.Sub.Balance.Start
+
+V.Local.sSel.Declare(String)
+V.Local.sBegDate.Declare(String)
+V.Local.sEndDate.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.iFor.Declare(Long)
+V.Local.sFisYr.Declare(String)
+
+V.Local.sFisYr.Set(V.Args.FISYEAR)
+
+' get beginning and ending calendar dates
+F.Intrinsic.String.Concat("select min(Beg_Date) as Beg_Date, max(End_Date) as End_Date from GL_Calendar where Start_Year='",V.Local.sFisYr,"' ",V.Local.sSel)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSel)
+	F.Intrinsic.Control.if(V.ODBC.Con!rstSel.EOF,=,False)
+		V.Local.sBegDate.Set(V.ODBC.Con!rstSel.FieldVal!Beg_Date)
+		V.Local.sEndDate.Set(V.ODBC.Con!rstSel.FieldVal!End_Date)
+	F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+V.uGlobal.uBalance.Redim(-1,-1)
+F.Intrinsic.String.Concat("select GL_Account, End_Balance as Amount from BI_Net_Change where Fiscal_Year ='",V.Local.sFisYr,"' order by Gl_Account, Period desc",V.Local.sSel)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSel)
+	F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+		F.Intrinsic.Variable.LoadUDTFromRecordset("Con","rstSel","v.uGlobal.uBalance",False,1)
+	F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+' just need last record for each gl_account
+F.Intrinsic.Variable.UDTMultiFlagDuplicates(V.uGlobal.uBalance!GL_Account)
+F.Intrinsic.Variable.UDTDeleteFlagged(V.uGlobal.uBalance)
+
+' update the ending balance on the bi table
+F.Intrinsic.Control.For(V.Local.iFor,V.uGlobal.uBalance!GL_Account.LBound,V.uGlobal.uBalance!GL_Account.UBound,1)
+	F.Intrinsic.String.Concat("update BI_Budg_Bal set End_Bal ='",V.uGlobal.uBalance(v.Local.iFor)!Amount,"' where Trmnl ='",V.Caller.Terminal,"' and Rptid='000809' and Rec_Type='L' and Account='",V.uGlobal.uBalance(v.Local.iFor)!GL_Account,"' ",V.Local.sSel)
+	F.ODBC.Connection!Con.Execute(V.Local.sSel)
+F.Intrinsic.Control.Next(V.Local.iFor)
+
+
+Program.Sub.Balance.End
+
+program.sub.cmdok_click.start
+
+
+Gui.SS_Form1..Visible(false)
+
+' call custom version of the report
+F.Intrinsic.Control.CallSub(Print_report)
+
+F.Intrinsic.Control.CallSub(Unload)
+
+program.sub.cmdok_click.end
+
+program.sub.cmd_txtdept_click.start
+
+V.Local.SsEL.Declare(String)
+V.Local.sTitles.Declare(String)
+V.Local.iWidths.Declare(Long)
+V.Local.sRet.Declare(String)
+
+F.Intrinsic.String.Concat("select distinct DEPT_Id, Dept_Name from Departments order by Dept_Id","",V.Local.SsEL)
+
+F.Intrinsic.String.Split("Dept*!*Name","*!*",V.Local.sTitles)
+F.Intrinsic.String.Split("2000*!*3000","*!*",V.Local.iWidths)
+
+F.Intrinsic.UI.Browser("Dept","Con",V.Local.SsEL,V.Local.sTitles,V.Local.iWidths,V.Local.sRet)
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	Gui.SS_Form1.txtDept.Text(V.Local.sRet(0).Trim)
+F.Intrinsic.Control.EndIf
+
+program.sub.cmd_txtdept_click.end
+
+
